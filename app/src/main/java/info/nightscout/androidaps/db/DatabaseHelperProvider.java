@@ -20,10 +20,6 @@ public class DatabaseHelperProvider implements DatabaseHelperInterface {
     @Inject DatabaseHelperProvider() {
     }
 
-    @NotNull @Override public List<BgReading> getAllBgreadingsDataFromTime(long mills, boolean ascending) {
-        return MainApp.getDbHelper().getAllBgreadingsDataFromTime(mills, ascending);
-    }
-
     @Override public void createOrUpdate(@NotNull CareportalEvent careportalEvent) {
         MainApp.getDbHelper().createOrUpdate(careportalEvent);
     }
@@ -112,4 +108,35 @@ public class DatabaseHelperProvider implements DatabaseHelperInterface {
         return MainApp.getDbHelper().getProfileSwitchData(from, ascending);
     }
 
+    @Override public void createOrUpdate(@NotNull InsightBolusID record) {
+        MainApp.getDbHelper().createOrUpdate(record);
+    }
+
+    @Override public void createOrUpdate(@NotNull InsightPumpID record) {
+        MainApp.getDbHelper().createOrUpdate(record);
+    }
+
+    @Override public void createOrUpdate(@NotNull InsightHistoryOffset record) {
+        MainApp.getDbHelper().createOrUpdate(record);
+    }
+
+    @Override public void delete(@NotNull ExtendedBolus extendedBolus) {
+        MainApp.getDbHelper().delete(extendedBolus);
+    }
+
+    @Nullable @Override public ExtendedBolus getExtendedBolusByPumpId(long pumpId) {
+        return MainApp.getDbHelper().getExtendedBolusByPumpId(pumpId);
+    }
+
+    @Nullable @Override public InsightBolusID getInsightBolusID(@NotNull String pumpSerial, int bolusID, long timestamp) {
+        return MainApp.getDbHelper().getInsightBolusID(pumpSerial, bolusID, timestamp);
+    }
+
+    @Nullable @Override public InsightHistoryOffset getInsightHistoryOffset(@NotNull String pumpSerial) {
+        return MainApp.getDbHelper().getInsightHistoryOffset(pumpSerial);
+    }
+
+    @Nullable @Override public InsightPumpID getPumpStoppedEvent(@NotNull String pumpSerial, long before) {
+        return MainApp.getDbHelper().getPumpStoppedEvent(pumpSerial, before);
+    }
 }

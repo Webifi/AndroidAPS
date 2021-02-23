@@ -2,6 +2,7 @@
 <resources>
     <!--    Keys-->
     <!--    General-->
+    <string name="refresh">Obnovit</string>
     <string name="error">Chyba</string>
     <string name="not_set_short">Nenastaveno</string>
     <string name="failedupdatebasalprofile">Chyba při nastavení bazálního profilu</string>
@@ -68,6 +69,40 @@
     <string name="pairing">Párování</string>
     <string name="yes">Ano</string>
     <string name="no">Ne</string>
+    <string name="loopdisabled">SMYČKA ZAKÁZÁNA OMEZENÍM</string>
+    <string name="bolusdelivered">Bolus %1$.2f U aplikován úspěšně</string>
+    <string name="virtualpump_resultok">OK</string>
+    <string name="novalidbasalrate">Z pumpy nepřečten žádný platný bazál</string>
+    <string name="limitingmaxiob">Max IOB omezeno na %1$.1f U: %2$s</string>
+    <string name="unsafeusage">nebezpečné použití</string>
+    <string name="pump_unreachable">Pumpa nedostupná</string>
+    <string name="extended_bolus">Prodloužený bolus</string>
+    <string name="pump_time_updated">Čas v pumpě aktualizován</string>
+    <string name="exit">Konec</string>
+    <string name="serial_number">Sériové číslo</string>
+    <string name="removerecord">Odstranit záznam</string>
+    <string name="loopisdisabled">Smyčka je zakázána</string>
+    <string name="alarm">Alarm</string>
+    <string name="disableloop">Zakázat smyčku</string>
+    <string name="enableloop">Povolit smyčku</string>
+    <string name="resumeloop">Obnovit smyčku</string>
+    <string name="suspendloop">Pozastavit smyčku</string>
+    <string name="duration_min_label">Trvání [min]</string>
+    <string name="notification">Oznámení</string>
+    <string name="noprofile">Dosud nebyl načten profil z NS</string>
+    <string name="exists">existuje</string>
+    <string name="notexists">neexistuje</string>
+    <string name="glucose">Glykémie</string>
+    <string name="iob">IOB</string>
+    <string name="cob">COB</string>
+    <string name="name_short">Jméno:</string>
+    <string name="time">Čas</string>
+    <string name="ns_wifi_ssids">WiFi SSID</string>
+    <string name="loading">Načítání…</string>
+    <string name="event_time_label">Čas události</string>
+    <string name="notes_label">Poznámky</string>
+    <string name="remove_button">Odstranit</string>
+    <string name="addnew">Přidat nový</string>
     <!--    Constraints-->
     <string name="limitingbasalratio">Max bazál omezen na %1$.2f U/h: %2$s</string>
     <string name="pumplimit">limit pumpy</string>
@@ -256,6 +291,14 @@
     <string name="versionavailable">Verze %1$s je k dispozici</string>
     <!-- Permissions -->
     <string name="alert_dialog_storage_permission_text">Prosím restartujte Váš telefon nebo restartujte AndroidAPS z nastavení systému\njinak nebude AndroidAPS zaznamenával logy (důležité pro sledování a kontrolu, zda algoritmus pracuje správně)!</string>
+    <!-- WeekdayPicker -->
+    <string name="monday_short">Po</string>
+    <string name="tuesday_short">Út</string>
+    <string name="wednesday_short">St</string>
+    <string name="thursday_short">Čt</string>
+    <string name="friday_short">Pá</string>
+    <string name="saturday_short">So</string>
+    <string name="sunday_short">Ne</string>
     <plurals name="days">
         <item quantity="one">%1$d den</item>
         <item quantity="few">%1$d dnů</item>

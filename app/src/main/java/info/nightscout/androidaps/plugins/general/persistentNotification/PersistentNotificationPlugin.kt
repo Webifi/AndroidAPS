@@ -7,10 +7,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
-import androidx.core.app.TaskStackBuilder
 import dagger.android.HasAndroidInjector
 import info.nightscout.androidaps.Constants
-import info.nightscout.androidaps.MainActivity
 import info.nightscout.androidaps.R
 import info.nightscout.androidaps.data.Profile
 import info.nightscout.androidaps.events.*
@@ -19,34 +17,32 @@ import info.nightscout.androidaps.logging.AAPSLogger
 import info.nightscout.androidaps.plugins.bus.RxBusWrapper
 import info.nightscout.androidaps.plugins.iob.iobCobCalculator.GlucoseStatus
 import info.nightscout.androidaps.plugins.iob.iobCobCalculator.IobCobCalculatorPlugin
-import info.nightscout.androidaps.plugins.iob.iobCobCalculator.events.EventAutosensCalculationFinished
 import info.nightscout.androidaps.utils.DecimalFormatter
 import info.nightscout.androidaps.utils.FabricPrivacy
-import info.nightscout.androidaps.utils.androidNotification.NotificationHolder
-import info.nightscout.androidaps.utils.androidNotification.openAppIntent
 import info.nightscout.androidaps.utils.resources.IconsProvider
 import info.nightscout.androidaps.utils.resources.ResourceHelper
+import info.nightscout.androidaps.utils.rx.AapsSchedulers
+import info.nightscout.androidaps.utils.valueToUnitsString
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Suppress("PrivatePropertyName")
+@Suppress("PrivatePropertyName", "DEPRECATION")
 @Singleton
 class PersistentNotificationPlugin @Inject constructor(
     injector: HasAndroidInjector,
     aapsLogger: AAPSLogger,
     resourceHelper: ResourceHelper,
+    private val aapsSchedulers: AapsSchedulers,
     private val profileFunction: ProfileFunction,
     private val fabricPrivacy: FabricPrivacy,
     private val activePlugins: ActivePluginProvider,
     private val iobCobCalculatorPlugin: IobCobCalculatorPlugin,
     private val rxBus: RxBusWrapper,
     private val context: Context,
-    private val notificationHolder: NotificationHolder,
+    private val notificationHolder: NotificationHolderInterface,
     private val dummyServiceHelper: DummyServiceHelper,
-    private val iconsProvider: IconsProvider,
-    private val databaseHelper: DatabaseHelperInterface
+    private val iconsProvider: IconsProvider
 ) : PluginBase(PluginDescription()
     .mainType(PluginType.GENERAL)
     .neverVisible(true)
@@ -74,36 +70,36 @@ class PersistentNotificationPlugin @Inject constructor(
         createNotificationChannel() // make sure channels exist before triggering updates through the bus
         disposable.add(rxBus
             .toObservable(EventRefreshOverview::class.java)
-            .observeOn(Schedulers.io())
-            .subscribe({ triggerNotificationUpdate() }) { fabricPrivacy.logException(it) })
+            .observeOn(aapsSchedulers.io)
+            .subscribe({ triggerNotificationUpdate() }, fabricPrivacy::logException))
         disposable.add(rxBus
             .toObservable(EventExtendedBolusChange::class.java)
-            .observeOn(Schedulers.io())
-            .subscribe({ triggerNotificationUpdate() }) { fabricPrivacy.logException(it) })
+            .observeOn(aapsSchedulers.io)
+            .subscribe({ triggerNotificationUpdate() }, fabricPrivacy::logException))
         disposable.add(rxBus
             .toObservable(EventTempBasalChange::class.java)
-            .observeOn(Schedulers.io())
-            .subscribe({ triggerNotificationUpdate() }) { fabricPrivacy.logException(it) })
+            .observeOn(aapsSchedulers.io)
+            .subscribe({ triggerNotificationUpdate() }, fabricPrivacy::logException))
         disposable.add(rxBus
             .toObservable(EventTreatmentChange::class.java)
-            .observeOn(Schedulers.io())
-            .subscribe({ triggerNotificationUpdate() }) { fabricPrivacy.logException(it) })
+            .observeOn(aapsSchedulers.io)
+            .subscribe({ triggerNotificationUpdate() }, fabricPrivacy::logException))
         disposable.add(rxBus
             .toObservable(EventInitializationChanged::class.java)
-            .observeOn(Schedulers.io())
-            .subscribe({ triggerNotificationUpdate() }) { fabricPrivacy.logException(it) })
+            .observeOn(aapsSchedulers.io)
+            .subscribe({ triggerNotificationUpdate() }, fabricPrivacy::logException))
         disposable.add(rxBus
             .toObservable(EventNewBasalProfile::class.java)
-            .observeOn(Schedulers.io())
-            .subscribe({ triggerNotificationUpdate() }) { fabricPrivacy.logException(it) })
+            .observeOn(aapsSchedulers.io)
+            .subscribe({ triggerNotificationUpdate() }, fabricPrivacy::logException))
         disposable.add(rxBus
             .toObservable(EventAutosensCalculationFinished::class.java)
-            .observeOn(Schedulers.io())
-            .subscribe({ triggerNotificationUpdate() }) { fabricPrivacy.logException(it) })
+            .observeOn(aapsSchedulers.io)
+            .subscribe({ triggerNotificationUpdate() }, fabricPrivacy::logException))
         disposable.add(rxBus
             .toObservable(EventPreferenceChange::class.java)
-            .observeOn(Schedulers.io())
-            .subscribe({ triggerNotificationUpdate() }) { fabricPrivacy.logException(it) })
+            .observeOn(aapsSchedulers.io)
+            .subscribe({ triggerNotificationUpdate() }, fabricPrivacy::logException))
         triggerNotificationUpdate()
     }
 
@@ -136,12 +132,12 @@ class PersistentNotificationPlugin @Inject constructor(
             val lastBG = iobCobCalculatorPlugin.lastBg()
             val glucoseStatus = GlucoseStatus(injector).glucoseStatusData
             if (lastBG != null) {
-                line1aa = lastBG.valueToUnitsToString(units)
+                line1aa = lastBG.valueToUnitsString(units)
                 line1 = line1aa
                 if (glucoseStatus != null) {
                     line1 += ("  Δ" + Profile.toSignedUnitsString(glucoseStatus.delta, glucoseStatus.delta * Constants.MGDL_TO_MMOLL, units)
-                        + " avgΔ" + Profile.toSignedUnitsString(glucoseStatus.avgdelta, glucoseStatus.avgdelta * Constants.MGDL_TO_MMOLL, units))
-                    line1aa += "  " + lastBG.directionToSymbol(databaseHelper)
+                        + " avgΔ" + Profile.toSignedUnitsString(glucoseStatus.avgDelta, glucoseStatus.avgDelta * Constants.MGDL_TO_MMOLL, units))
+                    line1aa += "  " + lastBG.trendArrow.symbol
                 } else {
                     line1 += " " +
                         resourceHelper.gs(R.string.old_data) +
@@ -207,7 +203,7 @@ class PersistentNotificationPlugin @Inject constructor(
         builder.setCategory(NotificationCompat.CATEGORY_STATUS)
         builder.setSmallIcon(iconsProvider.getNotificationIcon())
         builder.setLargeIcon(resourceHelper.decodeResource(iconsProvider.getIcon()))
-        if (line1 != null) builder.setContentTitle(line1)
+        builder.setContentTitle(line1)
         if (line2 != null) builder.setContentText(line2)
         if (line3 != null) builder.setSubText(line3)
         /// Android Auto
@@ -216,7 +212,7 @@ class PersistentNotificationPlugin @Inject constructor(
                 .setUnreadConversation(unreadConversationBuilder.build()))
         }
         /// End Android Auto
-        builder.setContentIntent(openAppIntent(context))
+        builder.setContentIntent(notificationHolder.openAppIntent(context))
         val mNotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = builder.build()
         mNotificationManager.notify(notificationHolder.notificationID, notification)

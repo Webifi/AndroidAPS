@@ -15,15 +15,17 @@ import info.nightscout.androidaps.plugins.bus.RxBusWrapper
 import info.nightscout.androidaps.utils.DateUtil
 import info.nightscout.androidaps.utils.FabricPrivacy
 import info.nightscout.androidaps.utils.HtmlHelper
-import info.nightscout.androidaps.utils.extensions.plusAssign
 import info.nightscout.androidaps.utils.resources.ResourceHelper
+import info.nightscout.androidaps.utils.rx.AapsSchedulers
 import info.nightscout.androidaps.utils.sharedPreferences.SP
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.plusAssign
 import javax.inject.Inject
 
 class LoopFragment : DaggerFragment() {
+
     @Inject lateinit var aapsLogger: AAPSLogger
+    @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var rxBus: RxBusWrapper
     @Inject lateinit var sp: SP
     @Inject lateinit var resourceHelper: ResourceHelper
@@ -59,18 +61,18 @@ class LoopFragment : DaggerFragment() {
         super.onResume()
         disposable += rxBus
             .toObservable(EventLoopUpdateGui::class.java)
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(aapsSchedulers.main)
             .subscribe({
                 updateGUI()
-            }, { fabricPrivacy.logException(it) })
+            }, fabricPrivacy::logException)
 
         disposable += rxBus
             .toObservable(EventLoopSetLastRunGui::class.java)
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(aapsSchedulers.main)
             .subscribe({
                 clearGUI()
                 binding.lastrun.text = it.text
-            }, { fabricPrivacy.logException(it) })
+            }, fabricPrivacy::logException)
 
         updateGUI()
         sp.putBoolean(R.string.key_objectiveuseloop, true)

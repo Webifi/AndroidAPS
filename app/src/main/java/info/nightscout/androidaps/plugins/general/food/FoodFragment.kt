@@ -18,13 +18,14 @@ import info.nightscout.androidaps.R
 import info.nightscout.androidaps.databinding.FoodFragmentBinding
 import info.nightscout.androidaps.databinding.FoodItemBinding
 import info.nightscout.androidaps.events.EventFoodDatabaseChanged
+import info.nightscout.androidaps.logging.UserEntryLogger
 import info.nightscout.androidaps.plugins.bus.RxBusWrapper
 import info.nightscout.androidaps.plugins.general.food.FoodFragment.RecyclerViewAdapter.FoodsViewHolder
 import info.nightscout.androidaps.plugins.general.nsclient.NSUpload
 import info.nightscout.androidaps.utils.FabricPrivacy
-import info.nightscout.androidaps.utils.alertDialogs.OKDialog.showConfirmation
+import info.nightscout.androidaps.utils.alertDialogs.OKDialog
 import info.nightscout.androidaps.utils.resources.ResourceHelper
-import io.reactivex.android.schedulers.AndroidSchedulers
+import info.nightscout.androidaps.utils.rx.AapsSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import java.util.*
 import javax.inject.Inject
@@ -32,11 +33,13 @@ import kotlin.collections.ArrayList
 
 class FoodFragment : DaggerFragment() {
 
+    @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var rxBus: RxBusWrapper
     @Inject lateinit var resourceHelper: ResourceHelper
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var foodPlugin: FoodPlugin
     @Inject lateinit var nsUpload: NSUpload
+    @Inject lateinit var uel: UserEntryLogger
 
     private val disposable = CompositeDisposable()
     private lateinit var unfiltered: List<Food>
@@ -106,8 +109,8 @@ class FoodFragment : DaggerFragment() {
         super.onResume()
         disposable.add(rxBus
             .toObservable(EventFoodDatabaseChanged::class.java)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ updateGui() }) { fabricPrivacy.logException(it) }
+            .observeOn(aapsSchedulers.main)
+            .subscribe({ updateGui() }, fabricPrivacy::logException)
         )
         updateGui()
     }
@@ -212,7 +215,8 @@ class FoodFragment : DaggerFragment() {
                 binding.remove.setOnClickListener { v: View ->
                     val food = v.tag as Food
                     activity?.let { activity ->
-                        showConfirmation(activity, resourceHelper.gs(R.string.confirmation), resourceHelper.gs(R.string.removerecord) + "\n" + food.name, DialogInterface.OnClickListener { _: DialogInterface?, _: Int ->
+                        OKDialog.showConfirmation(activity, resourceHelper.gs(R.string.confirmation), resourceHelper.gs(R.string.removerecord) + "\n" + food.name, DialogInterface.OnClickListener { _: DialogInterface?, _: Int ->
+                            uel.log("FOOD REMOVED", food.name)
                             if (food._id != null && food._id != "") {
                                 nsUpload.removeFoodFromNS(food._id)
                             }

@@ -17,18 +17,20 @@ import info.nightscout.androidaps.plugins.bus.RxBusWrapper
 import info.nightscout.androidaps.utils.DateUtil
 import info.nightscout.androidaps.utils.FabricPrivacy
 import info.nightscout.androidaps.utils.JSONFormatter
-import info.nightscout.androidaps.utils.extensions.plusAssign
 import info.nightscout.androidaps.utils.resources.ResourceHelper
-import io.reactivex.android.schedulers.AndroidSchedulers
+import info.nightscout.androidaps.utils.rx.AapsSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.plusAssign
 import org.json.JSONArray
 import org.json.JSONException
 import javax.inject.Inject
 
 class OpenAPSSMBFragment : DaggerFragment() {
+
     private var disposable: CompositeDisposable = CompositeDisposable()
 
     @Inject lateinit var aapsLogger: AAPSLogger
+    @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var rxBus: RxBusWrapper
     @Inject lateinit var resourceHelper: ResourceHelper
     @Inject lateinit var fabricPrivacy: FabricPrivacy
@@ -60,16 +62,16 @@ class OpenAPSSMBFragment : DaggerFragment() {
         super.onResume()
         disposable += rxBus
             .toObservable(EventOpenAPSUpdateGui::class.java)
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(aapsSchedulers.main)
             .subscribe({
                 updateGUI()
-            }, { fabricPrivacy.logException(it) })
+            }, fabricPrivacy::logException)
         disposable += rxBus
             .toObservable(EventOpenAPSUpdateResultGui::class.java)
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(aapsSchedulers.main)
             .subscribe({
                 updateResultGUI(it.text)
-            }, { fabricPrivacy.logException(it) })
+            }, fabricPrivacy::logException)
 
         updateGUI()
     }
@@ -115,7 +117,7 @@ class OpenAPSSMBFragment : DaggerFragment() {
         if (openAPSSMBPlugin.lastAPSRun != 0L) {
             binding.lastrun.text = dateUtil.dateAndTimeString(openAPSSMBPlugin.lastAPSRun)
         }
-        openAPSSMBPlugin.lastAutosensResult?.let {
+        openAPSSMBPlugin.lastAutosensResult.let {
             binding.autosensdata.text = JSONFormatter.format(it.json())
         }
     }

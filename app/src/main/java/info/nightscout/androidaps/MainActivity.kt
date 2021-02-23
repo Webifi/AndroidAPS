@@ -57,10 +57,10 @@ import info.nightscout.androidaps.utils.extensions.isRunningRealPumpTest
 import info.nightscout.androidaps.utils.locale.LocaleHelper
 import info.nightscout.androidaps.utils.protection.ProtectionCheck
 import info.nightscout.androidaps.utils.resources.IconsProvider
+import info.nightscout.androidaps.utils.rx.AapsSchedulers
 import info.nightscout.androidaps.utils.sharedPreferences.SP
 import info.nightscout.androidaps.utils.tabs.TabPageAdapter
 import info.nightscout.androidaps.utils.ui.UIRunnable
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import java.util.*
 import javax.inject.Inject
@@ -71,6 +71,7 @@ class MainActivity : NoSplashAppCompatActivity() {
     private val disposable = CompositeDisposable()
 
     @Inject lateinit var aapsLogger: AAPSLogger
+    @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var rxBus: RxBusWrapper
     @Inject lateinit var androidPermission: AndroidPermission
     @Inject lateinit var sp: SP
@@ -125,7 +126,7 @@ class MainActivity : NoSplashAppCompatActivity() {
         setupViews()
         disposable.add(rxBus
             .toObservable(EventRebuildTabs::class.java)
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(aapsSchedulers.main)
             .subscribe({
                 if (it.recreate) recreate()
                 else setupViews()
@@ -134,10 +135,10 @@ class MainActivity : NoSplashAppCompatActivity() {
         )
         disposable.add(rxBus
             .toObservable(EventPreferenceChange::class.java)
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(aapsSchedulers.main)
             .subscribe({ processPreferenceChange(it) }, fabricPrivacy::logException)
         )
-        if (!sp.getBoolean(R.string.key_setupwizard_processed, false) && !isRunningRealPumpTest()) {
+        if (startWizard() && !isRunningRealPumpTest()) {
             protectionCheck.queryProtection(this, ProtectionCheck.Protection.PREFERENCES, {
                 startActivity(Intent(this, SetupWizardActivity::class.java))
             })
@@ -154,6 +155,9 @@ class MainActivity : NoSplashAppCompatActivity() {
     private fun checkPluginPreferences(viewPager: ViewPager2) {
         if (viewPager.currentItem >= 0) pluginPreferencesMenuItem?.isEnabled = (viewPager.adapter as TabPageAdapter).getPluginAt(viewPager.currentItem).preferencesId != -1
     }
+
+    private fun startWizard() : Boolean =
+        !sp.getBoolean(R.string.key_setupwizard_processed, false)
 
     override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
         super.onPostCreate(savedInstanceState, persistentState)
@@ -380,6 +384,7 @@ class MainActivity : NoSplashAppCompatActivity() {
         FirebaseCrashlytics.getInstance().setCustomKey("Remote", remote)
         FirebaseCrashlytics.getInstance().setCustomKey("Committed", BuildConfig.COMMITTED)
         FirebaseCrashlytics.getInstance().setCustomKey("Hash", hashes[0])
+        FirebaseCrashlytics.getInstance().setCustomKey("Email", sp.getString(R.string.key_email_for_crash_report, ""))
     }
 
 }
